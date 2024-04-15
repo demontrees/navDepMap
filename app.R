@@ -4,6 +4,9 @@ require(ComplexHeatmap)
 require(matrixStats)
 require(pathfindR)
 require(shinyjs)
+require(vioplot)
+require(doMC)
+require(foreach)
 
 load(file = '/srv/shiny-server/navDepMap/data/cells_DM.RData')
 load(file = '/srv/shiny-server/navDepMap/data/cellsCN_DM.RData')
@@ -127,8 +130,7 @@ server <- function(input, output, session) {
   })
   output$CTY <- renderPlot(cty())
 #-------------------------------DRUG VIO
-    require(doMC)
-    require(foreach)
+
     
   lisx_drugs = reactive({
     registerDoMC(cores = 48)
