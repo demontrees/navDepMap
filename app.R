@@ -49,7 +49,7 @@ ui <- fluidPage(
     mainPanel(navset_card_underline(
           title = "Graphs",
           nav_panel("Heatmap", plotOutput("HMP"),plotOutput("CTY")),
-          nav_panel("Violin Plots", plotOutput("VIO"),plotOutput("VI2")),
+          nav_panel("Violin Plots", plotOutput("VIO"),plotOutput("RV1"),plotOutput("VI2"),plotOutput("RV2")),
           nav_panel("GSEA", plotOutput("GSE"))
         ))
                  
@@ -180,7 +180,19 @@ server <- function(input, output, session) {
     vioplot(t(dr[eff_drugs()[1:20],grpsel]),col = 'red', plotCentre = "line", side = "left", na.rm=T, names=paste(as.vector(dnames[c(eff_drugs()[1:20]),c(1)]), as.vector(dnames[c(eff_drugs()[1:20]),c(2)]), sep ='\n' ),ylim=c(max(dr[eff_drugs()[1:20],c(grpsel,grpuns)],na.rm = T),(min(dr[eff_drugs()[1:20],c(grpsel,grpuns)], na.rm = T))), las = 3, cex.names = 0.5,cex.main = 1,cex = 0.7, cex.axis = 0.7, main = 'Significant Drug Performance Differences', ylab = 'Drug Response')
     vioplot(t(dr[eff_drugs()[1:20],grpuns]), col = 'blue', plotCentre = "line", side = "right", add = T, na.rm=T)
   })
+  
+  rv1 <- reactive({
+    grpsel <- grp_sel()
+    grpsel <- grpsel[which(grpsel %in% colnames(dr))]
+    grpuns <- grp_uns()
+    grpuns <- grpuns[which(grpuns %in% colnames(dr))]
+    par(mar = c(18,4,4,4))
+    vioplot(t(dr[res_drugs()[1:20],grpsel]),col = 'red', plotCentre = "line", side = "left", na.rm=T, names=paste(as.vector(dnames[c(res_drugs()[1:20]),c(1)]), as.vector(dnames[c(res_drugs()[1:20]),c(2)]), sep ='\n' ),ylim=c(max(dr[eff_drugs()[1:20],c(grpsel,grpuns)],na.rm = T),(min(dr[eff_drugs()[1:20],c(grpsel,grpuns)], na.rm = T))), las = 3, cex.names = 0.5,cex.main = 1,cex = 0.7, cex.axis = 0.7, main = 'Resistant Drugs', ylab = 'Drug Response')
+    vioplot(t(dr[res_drugs()[1:20],grpuns]), col = 'blue', plotCentre = "line", side = "right", add = T, na.rm=T)
+  })
+  
   output$VIO <- renderPlot(vio())
+  output$RV1 <- renderPlot(rv1())
 #-----------------------------ESS VIO
   
   lisx_ess = reactive({
@@ -233,7 +245,19 @@ server <- function(input, output, session) {
     vioplot(t(kd[eff_ess()[1:20],grpsel]),col = 'red', plotCentre = "line", side = "left", na.rm=T, names=eff_ess()[1:20],ylim=c(max(kd[eff_ess()[1:20],c(grpsel,grpuns)],na.rm = T),(min(kd[eff_ess()[1:20],c(grpsel,grpuns)], na.rm = T))), las = 3, cex.names = 0.5,cex.main = 1,cex = 0.7, cex.axis = 0.7, main = 'Significant Essentiality Differences', ylab = 'Essentiality')
     vioplot(t(kd[eff_ess()[1:20],grpuns]), col = 'blue', plotCentre = "line", side = "right", add = T, na.rm=T)
   })
+  
+  rv2 <- reactive({
+    grpsel <- grp_sel()
+    grpsel <- grpsel[which(grpsel %in% colnames(kd))]
+    grpuns <- grp_uns()
+    grpuns <- grpuns[which(grpuns %in% colnames(kd))]
+    par(mar = c(6,4,4,4))
+    vioplot(t(kd[res_ess()[1:20],grpsel]),col = 'red', plotCentre = "line", side = "left", na.rm=T, names=res_ess()[1:20],ylim=c(max(kd[res_ess()[1:20],c(grpsel,grpuns)],na.rm = T),(min(kd[res_ess()[1:20],c(grpsel,grpuns)], na.rm = T))), las = 3, cex.names = 0.5,cex.main = 1,cex = 0.7, cex.axis = 0.7, main = 'Resistance Genes', ylab = 'Essentiality')
+    vioplot(t(kd[res_ess()[1:20],grpuns]), col = 'blue', plotCentre = "line", side = "right", add = T, na.rm=T)
+  })
+  
   output$VI2 <- renderPlot(vi2())
+  output$RV2 <- renderPlot(rv2())
 #--------------------------------------GSEA
   gse<-reactive({
     both <-c(eff_ess()[1:200],res_ess()[1:200])
