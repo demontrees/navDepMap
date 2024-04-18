@@ -23,11 +23,16 @@ dnames<-dnames[rownames(dr),]
 #-----------UI
 ui <- fluidPage(
   useShinyjs(),
-  theme = bs_theme(bootswatch = 'darkly'),
+  theme = bs_theme(),
   
   
   sidebarLayout(
-    sidebarPanel( radioButtons(
+    sidebarPanel( card(tags$img(src = '/srv/shiny-server/navDepMap/tumorAI.png',
+                                contentType = 'image/png',
+                                width = 400,
+                                height = 300,
+                                alt = "This is alternate text")),
+                  radioButtons(
                        'SEP', 'Separate By', c('RNA','Gene Copy Number','Protein','Mutation'),selected = 'Gene Copy Number'
                      ),
                   selectInput('CAN','Cancer Type',choices = unique(celldat$tcga_code),multiple = T),
@@ -46,10 +51,15 @@ ui <- fluidPage(
                        )),
                   textInput('DIR','Save Directory:',value = '~/navDepMap/results/'),
                   actionButton('SAV','Save Results')),
-    mainPanel(navset_card_underline(
+    mainPanel(card(    HTML("<h1>Welcome to the DepApp!</h1>
+          <p>You can use this app to compare drug and gene KD sensitivities between different cancer states for cell lines available from DepMap. Just choose a metric to use to separate the cell lines, the Cancer type(s) of interest, and the genes you would like to analyze. For all but `Mutation` you can then hand pick the clusters to analyze using the heatmap. for Mutation, just choose the genes and which mutation types you are interested in. This tool is still in development, so please let us know if you have any suggestions at smmcqueen@salud.unm.edu</p>
+          <p>Remember to cite the PathfindR paper (for the GSEA analysis) if you use it in a publication!</p>")
+    ),
+      navset_card_underline(
           title = "Graphs",
           nav_panel("Heatmap", plotOutput("HMP"),plotOutput("CTY")),
-          nav_panel("Violin Plots", plotOutput("VIO"),plotOutput("RV1"),plotOutput("VI2"),plotOutput("RV2")),
+          nav_panel("Drug Response", plotOutput("VIO"),plotOutput("RV1")),
+          nav_panel("Gene Essentiality", plotOutput("VI2"),plotOutput("RV2")),
           nav_panel("GSEA", plotOutput("GSE"))
         ))
                  
@@ -77,13 +87,13 @@ server <- function(input, output, session) {
   })
   sep<-reactive({input$SEP})
   cells_<-reactive({
-    if (sep() == "RNA"){updateSelectizeInput(session, 'GEN',label = 'Gene', choices = colnames(cells), server = TRUE)
+    if (sep() == "RNA"){updateSelectizeInput(session, 'GEN',label = 'Gene', choices = colnames(cells), server = TRUE, selected = NULL)
                         cells_.<-cells
-    } else if (sep() == "Gene Copy Number"){updateSelectizeInput(session, 'GEN',label = 'Gene', choices = colnames(cellsCN), server = TRUE)
+    } else if (sep() == "Gene Copy Number"){updateSelectizeInput(session, 'GEN',label = 'Gene', choices = colnames(cellsCN), server = TRUE, selected = NULL)
                         cells_.<-cellsCN
-    } else if (sep() == "Mutation"){updateSelectizeInput(session, 'GEN',label = 'Protein', choices = unique(muts$HugoSymbol), server = TRUE)
+    } else if (sep() == "Mutation"){updateSelectizeInput(session, 'GEN',label = 'Protein', choices = unique(muts$HugoSymbol), server = TRUE, selected = NULL)
                                     
-    } else if (sep() == "Protein"){updateSelectizeInput(session, 'GEN',label = 'Protein', choices = colnames(prot), server = TRUE)
+    } else if (sep() == "Protein"){updateSelectizeInput(session, 'GEN',label = 'Protein', choices = colnames(prot), server = TRUE, selected = NULL)
                         cells_.<-prot}
     cells_.
       })
@@ -126,14 +136,14 @@ server <- function(input, output, session) {
   
   par(mar=c(5, 4, 4, 8), xpd=TRUE)
   barplot(vals, col = palette('Alphabet')[1:length(ctyps)], main = 'Percent Cancer Type In\nHigh and Low Enriched Clusters' , cex.main = 1.2, beside = FALSE , cex.lab = 1,horiz = T)
-  legend(1.05,2, legend=names(ctyps), title="C-Type",palette('Alphabet')[1:length(ctyps)],cex = 1)
+  legend(1.01,2, legend=names(ctyps), title="C-Type",palette('Alphabet')[1:length(ctyps)],cex = 1)
   })
   output$CTY <- renderPlot(cty())
 #-------------------------------DRUG VIO
 
     
   lisx_drugs = reactive({
-    registerDoMC(cores = 48)
+    registerDoMC(cores = 64)
       grpsel <- grp_sel()
       grpsel <- grpsel[which(grpsel %in% colnames(dr))]
       grpuns <- grp_uns()
@@ -150,7 +160,7 @@ server <- function(input, output, session) {
     })
     
   lisy_drugs = reactive({
-    registerDoMC(cores = 48)
+    registerDoMC(cores = 64)
       grpsel <- grp_sel()
       grpsel <- grpsel[which(grpsel %in% colnames(dr))]
       grpuns <- grp_uns()
@@ -196,7 +206,7 @@ server <- function(input, output, session) {
 #-----------------------------ESS VIO
   
   lisx_ess = reactive({
-    registerDoMC(cores = 48)
+    registerDoMC(cores = 64)
     grpsel <- grp_sel()
     grpsel <- grpsel[which(grpsel %in% colnames(kd))]
     grpuns <- grp_uns()
@@ -214,7 +224,7 @@ server <- function(input, output, session) {
   })
   
   lisy_ess = reactive({
-    registerDoMC(cores = 48)
+    registerDoMC(cores = 64)
     grpsel <- grp_sel()
     grpsel <- grpsel[which(grpsel %in% colnames(kd))]
     grpuns <- grp_uns()
